@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  lambda-go-proxy-api-demo-app
+
+  SAM Template for lambda-go-proxy-api-demo-app
+
+Globals:
+  Function:
+    Timeout: 5
+
+Resources:
+  DemoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/query
+      Handler: demo
+      Runtime: go1.x
+      Architectures:
+        - x86_64
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        ApiEvents:
+          Type: Api
+          Properties:
+            Path: /query
+            Method: POST
+            RestApiId: !Ref DemoAPIGateway
+            # Auth:
+            #   ApiKeyRequired: true
+  DemoAPIGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+
+Outputs:
+  APIGWEndpoint:
+    Description: API Gateway Endpoint
+    Value:
+      Fn::Sub: https://${DemoAPIGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/query

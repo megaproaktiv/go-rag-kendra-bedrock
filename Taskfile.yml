@@ -1,0 +1,26 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+
+tasks:
+  build:
+    desc: Sam build
+    cmds:
+      - sam build
+    silent: true
+
+  deploy:
+    desc: Sam deploy
+    deps:
+      - build
+    cmds:
+      - sam deploy
+    silent: true
+
+  destroy:
+    desc: sam delete
+    cmds:
+      - sam delete
