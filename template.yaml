@@ -14,12 +14,21 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambda/query
-      Handler: demo
-      Runtime: go1.x
       Architectures:
-        - x86_64
+        - arm64
+      Handler: bootstrap
+      Runtime: provided.al2
+      MemorySize: 1024
       Policies:
         - AWSLambdaBasicExecutionRole
+        - Statement:
+          - Sid: BedrockRuntime
+            Effect: Allow
+            Action:
+            - bedrockruntime:InvokeModel
+            - bedrock:InvokeModel
+            Resource: '*'
+
       Events:
         ApiEvents:
           Type: Api
@@ -29,10 +38,29 @@ Resources:
             RestApiId: !Ref DemoAPIGateway
             # Auth:
             #   ApiKeyRequired: true
+      Environment:
+        Variables:
+          PARAM1: VALUE
+    Metadata:
+      BuildMethod: makefile
   DemoAPIGateway:
     Type: AWS::Serverless::Api
     Properties:
       StageName: dev
+    Auth:
+      ApiKeyRequired: true  # for all methods
+      UsagePlan:
+        CreateUsagePlan: PER_API
+        Description: Usage plan for this API
+        Quota:
+          Limit: 500
+          Period: DAY
+        Throttle:
+          BurstLimit: 100
+          RateLimit: 50
+        Tags:
+          - Key: TagName
+            Value: TagValue        
 
 Outputs:
   APIGWEndpoint:

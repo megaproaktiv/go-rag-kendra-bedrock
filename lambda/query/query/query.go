@@ -2,16 +2,21 @@ package query
 
 import (
 	"github.com/gin-gonic/gin"
+	bedrock "github.com/megaproaktiv/go-rag-kendra-bedrock/bedrock"
 	"log"
 	"net/http"
 )
 
-type CreateURLRequest struct {
-	URL string `json:"url"`
+type QueryRequest struct {
+	Question string `json:"question"`
+}
+
+type Response struct {
+	Answer string `json:"answer"`
 }
 
 func Query(c *gin.Context) {
-	var req CreateURLRequest
+	var req QueryRequest
 
 	err := c.BindJSON(&req)
 	if err != nil {
@@ -19,15 +24,13 @@ func Query(c *gin.Context) {
 		return
 	}
 
-	url := req.URL
+	question := req.Question
 
-	log.Println("shortcode creation request for", url)
+	log.Println("Question received", question)
 
-	response := Response{ShortCode: "Hello"}
+	answer := bedrock.Chat(question)
+
+	response := Response{Answer: answer}
 	c.JSON(201, response)
 
-}
-
-type Response struct {
-	ShortCode string `json:"short_code"`
 }

@@ -24,3 +24,8 @@ tasks:
     desc: sam delete
     cmds:
       - sam delete
+
+  sync:
+    desc: sync code
+    cmds:
+      - sam sync --code --stack-name godemo --watch
