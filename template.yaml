@@ -19,6 +19,7 @@ Resources:
       Handler: bootstrap
       Runtime: provided.al2
       MemorySize: 1024
+      Timeout: 90
       Policies:
         - AWSLambdaBasicExecutionRole
         - Statement:
@@ -27,6 +28,13 @@ Resources:
             Action:
             - bedrockruntime:InvokeModel
             - bedrock:InvokeModel
+            Resource: '*'
+        - Statement:
+          - Sid: KendraRetrieve
+            Effect: Allow
+            Action:
+            - kendra:Retrieve
+            - kendra:Query
             Resource: '*'
 
       Events:
@@ -40,7 +48,7 @@ Resources:
             #   ApiKeyRequired: true
       Environment:
         Variables:
-          PARAM1: VALUE
+          KENDRA_ID: e07ce924-ddae-4163-9245-389d425a48d9
     Metadata:
       BuildMethod: makefile
   DemoAPIGateway:

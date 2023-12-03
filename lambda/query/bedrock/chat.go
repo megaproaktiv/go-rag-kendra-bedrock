@@ -15,7 +15,7 @@ import (
 
 const defaultRegion = "eu-central-1"
 
-var brc *bedrockruntime.Client
+var Client *bedrockruntime.Client
 
 func init() {
 
@@ -29,7 +29,7 @@ func init() {
 		log.Fatal(err)
 	}
 
-	brc = bedrockruntime.NewFromConfig(cfg)
+	Client = bedrockruntime.NewFromConfig(cfg)
 }
 
 var verbose *bool
@@ -60,14 +60,14 @@ func send(msg string) (string, error) {
 		return "", err
 	}
 
-	output, err := brc.InvokeModel(context.Background(), &bedrockruntime.InvokeModelInput{
+	output, err := Client.InvokeModel(context.Background(), &bedrockruntime.InvokeModelInput{
 		Body:        payloadBytes,
 		ModelId:     aws.String("anthropic.claude-v2"),
 		ContentType: aws.String("application/json"),
 	})
 
 	if err != nil {
-		fmt.Println("Error %v\n", err)
+		fmt.Printf("Error %v\n", err)
 		return "", err
 	}
 

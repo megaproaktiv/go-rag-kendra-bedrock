@@ -1,10 +1,12 @@
 package query
 
 import (
-	"github.com/gin-gonic/gin"
-	bedrock "github.com/megaproaktiv/go-rag-kendra-bedrock/bedrock"
+	"golang.org/x/exp/slog"
 	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/megaproaktiv/go-rag-kendra-bedrock/chain"
 )
 
 type QueryRequest struct {
@@ -20,17 +22,22 @@ func Query(c *gin.Context) {
 
 	err := c.BindJSON(&req)
 	if err != nil {
+		slog.Error("Error loading input parameter", "error", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	question := req.Question
-
 	log.Println("Question received", question)
 
-	answer := bedrock.Chat(question)
-
+	// answer := bedrock.Chat(question)
+	answer, err := chain.RagChain(question)
+	if err != nil {
+		slog.Error("Error chain rag", "error", err)
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 	response := Response{Answer: answer}
-	c.JSON(201, response)
+	c.JSON(200, response)
 
 }
