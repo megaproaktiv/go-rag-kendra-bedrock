@@ -3,14 +3,16 @@ package chain
 import (
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/service/kendra/types"
 	bedrock "github.com/megaproaktiv/go-rag-kendra-bedrock/bedrock"
 	kendra "github.com/megaproaktiv/go-rag-kendra-bedrock/kendra"
 	"golang.org/x/exp/slog"
 )
 
-func RagChain(question string) (string, error) {
+func RagChain(question string) (string, *[]kendra.Document, error) {
 	slog.Info("Lambda start")
 	slog.Info("Kendra start")
+	documents := make([]kendra.Document, 0)
 	query, err := kendra.Retrieve(kendra.Client, question)
 	if err != nil {
 		slog.Error("Kendra retrieve error", "Error", err)
@@ -29,8 +31,14 @@ func RagChain(question string) (string, error) {
 
 	prompt := pre
 	for _, doc := range query.ResultItems {
+		document := kendra.Document{
+			Excerpt: doc.Content,
+			Title:   doc.DocumentTitle,
+		}
+		document.Page = kendraPage(doc)
 		prompt = prompt + " Document Title: " + *doc.DocumentTitle
 		prompt = prompt + " Document Excerpt: " + *doc.Content
+		documents = append(documents, document)
 	}
 	prompt = prompt + post
 
@@ -39,10 +47,40 @@ func RagChain(question string) (string, error) {
 	slog.Info("OpenAI end")
 	if err != nil {
 		fmt.Printf("Completion error: %v\n", err)
-		return "", err
+		return "", nil, err
 	}
 
 	fmt.Println(answer)
 	slog.Info("Lambda end")
-	return answer, nil
+	return answer, &documents, nil
+}
+
+func kendraPage(item types.RetrieveResultItem) *int {
+	page := 0
+	for _, attribute := range item.DocumentAttributes {
+		if *attribute.Key == "_excerpt_page_number" {
+			page = int(*attribute.Value.LongValue)
+		}
+	}
+	return &page
+}
+
+func kendraCategory(item types.RetrieveResultItem) *string {
+	var category *string
+	for _, attribute := range item.DocumentAttributes {
+		if *attribute.Key == "_category" {
+			category = attribute.Value.StringValue
+		}
+	}
+	return category
+}
+
+func kendraVersion(item types.RetrieveResultItem) *string {
+	var version *string
+	for _, attribute := range item.DocumentAttributes {
+		if *attribute.Key == "_version" {
+			version = attribute.Value.StringValue
+		}
+	}
+	return version
 }

@@ -49,6 +49,8 @@ Resources:
       Environment:
         Variables:
           KENDRA_ID: e07ce924-ddae-4163-9245-389d425a48d9
+          KENDRA_REGION: eu-west-1
+          KENDRA_LANGUAGE_CODE: en
     Metadata:
       BuildMethod: makefile
   DemoAPIGateway:

@@ -11,12 +11,22 @@ import (
 	"golang.org/x/exp/slog"
 )
 
+type Document struct {
+	Excerpt *string `json:"excerpt"`
+	Title   *string `json:"title"`
+	Page    *int    `json:"page"`
+	Link    *string `json:"link"`
+}
+
 var Client *kendra.Client
 
-const region = "eu-west-1"
+var region string
+var languageCode string
 
 // Init the kendra client
 func init() {
+	languageCode = os.Getenv("KENDRA_LANGUAGE_CODE")
+	region = os.Getenv("KENDRA_REGION")
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion(region),
 	)
@@ -35,9 +45,11 @@ func Retrieve(client *kendra.Client, query string) (*kendra.RetrieveOutput, erro
 	// set parameters
 	index := os.Getenv("KENDRA_ID")
 
+	// Set filter if necessary
 	parameters := &kendra.RetrieveInput{
 		IndexId:   &index,
 		QueryText: &query,
+		PageSize:  aws.Int32(20),
 		AttributeFilter: &types.AttributeFilter{
 			AndAllFilters: []types.AttributeFilter{
 				{

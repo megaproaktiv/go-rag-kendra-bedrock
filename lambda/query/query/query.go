@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/megaproaktiv/go-rag-kendra-bedrock/chain"
+	"github.com/megaproaktiv/go-rag-kendra-bedrock/kendra"
 )
 
 type QueryRequest struct {
@@ -14,7 +15,8 @@ type QueryRequest struct {
 }
 
 type Response struct {
-	Answer string `json:"answer"`
+	Answer    string            `json:"answer"`
+	Documents []kendra.Document `json:"documents"`
 }
 
 func Query(c *gin.Context) {
@@ -31,13 +33,15 @@ func Query(c *gin.Context) {
 	log.Println("Question received", question)
 
 	// answer := bedrock.Chat(question)
-	answer, err := chain.RagChain(question)
+	answer, documents, err := chain.RagChain(question)
 	if err != nil {
 		slog.Error("Error chain rag", "error", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	response := Response{Answer: answer}
+	response := Response{
+		Answer:    answer,
+		Documents: *documents,
+	}
 	c.JSON(200, response)
-
 }
