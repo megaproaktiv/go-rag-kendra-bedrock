@@ -9,7 +9,7 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-func RagChain(question string) (string, *[]kendra.Document, error) {
+func RagChain(question kendra.Query) (string, *[]kendra.Document, error) {
 	slog.Info("Lambda start")
 	slog.Info("Kendra start")
 	documents := make([]kendra.Document, 0)
@@ -25,7 +25,7 @@ func RagChain(question string) (string, *[]kendra.Document, error) {
 		does not know.`
 
 	post := `Instruction: You are a friendly service guy.
-		Based on this text, give a detailed answer to the following question: \n` + question + ` answers with "I can't say anything about that",
+	 Based on this text, give a detailed answer to the following question: \n` + question.Question + ` answers with "I can't say anything about that",
 			if the data in the document is not sufficient.
 	`
 

@@ -12,6 +12,8 @@ import (
 
 type QueryRequest struct {
 	Question string `json:"question"`
+	Category string `json:"category"`
+	Version  string `json:"version"`
 }
 
 type Response struct {
@@ -32,8 +34,17 @@ func Query(c *gin.Context) {
 	question := req.Question
 	log.Println("Question received", question)
 
-	// answer := bedrock.Chat(question)
-	answer, documents, err := chain.RagChain(question)
+	query := kendra.Query{
+		Question: question,
+	}
+
+	if req.Category != "" {
+		query.Category = &req.Category
+	}
+	if req.Version != "" {
+		query.Version = &req.Version
+	}
+	answer, documents, err := chain.RagChain(query)
 	if err != nil {
 		slog.Error("Error chain rag", "error", err)
 		c.AbortWithError(http.StatusInternalServerError, err)

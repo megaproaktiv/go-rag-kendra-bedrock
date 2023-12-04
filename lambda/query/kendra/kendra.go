@@ -18,6 +18,12 @@ type Document struct {
 	Link    *string `json:"link"`
 }
 
+type Query struct {
+	Question string  `json:"question"`
+	Category *string `json:"category"`
+	Version  *string `json:"version"`
+}
+
 var Client *kendra.Client
 
 var region string
@@ -37,7 +43,7 @@ func init() {
 	Client = kendra.NewFromConfig(cfg)
 }
 
-func Retrieve(client *kendra.Client, query string) (*kendra.RetrieveOutput, error) {
+func Retrieve(client *kendra.Client, query Query) (*kendra.RetrieveOutput, error) {
 	// use the retrieve api to query kendra
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/kendra/#Kendra.RetrieveDocument
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/kendra/#Kendra.Query
@@ -46,22 +52,47 @@ func Retrieve(client *kendra.Client, query string) (*kendra.RetrieveOutput, erro
 	index := os.Getenv("KENDRA_ID")
 
 	// Set filter if necessary
-	parameters := &kendra.RetrieveInput{
-		IndexId:   &index,
-		QueryText: &query,
-		PageSize:  aws.Int32(20),
-		AttributeFilter: &types.AttributeFilter{
-			AndAllFilters: []types.AttributeFilter{
-				{
-					EqualsTo: &types.DocumentAttribute{
-						Key: aws.String("_language_code"),
-						Value: &types.DocumentAttributeValue{
-							StringValue: aws.String("en"),
-						},
+	filter := &types.AttributeFilter{
+		AndAllFilters: []types.AttributeFilter{
+			{
+				EqualsTo: &types.DocumentAttribute{
+					Key: aws.String("_language_code"),
+					Value: &types.DocumentAttributeValue{
+						StringValue: aws.String(languageCode),
 					},
 				},
 			},
 		},
+	}
+
+	if query.Category != nil {
+		filter.AndAllFilters = append(filter.AndAllFilters, types.AttributeFilter{
+			EqualsTo: &types.DocumentAttribute{
+				Key: aws.String("_category"),
+				Value: &types.DocumentAttributeValue{
+					StringValue: query.Category,
+				},
+			},
+		})
+	}
+
+	if query.Version != nil {
+		filter.AndAllFilters = append(filter.AndAllFilters, types.AttributeFilter{
+			EqualsTo: &types.DocumentAttribute{
+				Key: aws.String("_version"),
+				Value: &types.DocumentAttributeValue{
+					StringValue: query.Version,
+				},
+			},
+		})
+	}
+
+	slog.Info("Filter", "filter", filter)
+	parameters := &kendra.RetrieveInput{
+		IndexId:         &index,
+		QueryText:       &query.Question,
+		PageSize:        aws.Int32(20),
+		AttributeFilter: filter,
 	}
 	// do retrieve
 	resp, err := client.Retrieve(context.Background(), parameters)

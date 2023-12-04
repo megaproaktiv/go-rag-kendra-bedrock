@@ -9,6 +9,8 @@ Globals:
   Function:
     Timeout: 5
 
+
+
 Resources:
   DemoFunction:
     Type: AWS::Serverless::Function
@@ -44,15 +46,16 @@ Resources:
             Path: /query
             Method: POST
             RestApiId: !Ref DemoAPIGateway
-            # Auth:
-            #   ApiKeyRequired: true
+            Auth:
+              ApiKeyRequired: true
       Environment:
         Variables:
-          KENDRA_ID: e07ce924-ddae-4163-9245-389d425a48d9
+          KENDRA_ID: 86552ac8-2f23-45fd-aa90-3c3febe50ea9
           KENDRA_REGION: eu-west-1
-          KENDRA_LANGUAGE_CODE: en
+          KENDRA_LANGUAGE_CODE: de
     Metadata:
       BuildMethod: makefile
+ 
   DemoAPIGateway:
     Type: AWS::Serverless::Api
     Properties:
