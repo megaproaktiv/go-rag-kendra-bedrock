@@ -33,6 +33,8 @@ func Query(c *gin.Context) {
 
 	question := req.Question
 	log.Println("Question received", question)
+	log.Println("Category", req.Category)
+	log.Println("Version", req.Version)
 
 	query := kendra.Query{
 		Question: question,

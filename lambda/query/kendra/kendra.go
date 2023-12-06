@@ -49,9 +49,10 @@ func Retrieve(client *kendra.Client, query Query) (*kendra.RetrieveOutput, error
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/kendra/#Kendra.Query
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/kendra/#Kendra.QueryResultItem
 	// set parameters
-	index := os.Getenv("KENDRA_ID")
+	index := os.Getenv("KENDRA_INDEX_ID")
 
 	// Set filter if necessary
+
 	filter := &types.AttributeFilter{
 		AndAllFilters: []types.AttributeFilter{
 			{
@@ -62,36 +63,33 @@ func Retrieve(client *kendra.Client, query Query) (*kendra.RetrieveOutput, error
 					},
 				},
 			},
+			{
+				EqualsTo: &types.DocumentAttribute{
+					Key: aws.String("_category"),
+					Value: &types.DocumentAttributeValue{
+						StringValue: query.Category,
+					},
+				},
+			},
+			{
+				EqualsTo: &types.DocumentAttribute{
+					Key: aws.String("_version"),
+					Value: &types.DocumentAttributeValue{
+						StringValue: query.Version,
+					},
+				},
+			},
 		},
 	}
 
-	if query.Category != nil {
-		filter.AndAllFilters = append(filter.AndAllFilters, types.AttributeFilter{
-			EqualsTo: &types.DocumentAttribute{
-				Key: aws.String("_category"),
-				Value: &types.DocumentAttributeValue{
-					StringValue: query.Category,
-				},
-			},
-		})
-	}
-
-	if query.Version != nil {
-		filter.AndAllFilters = append(filter.AndAllFilters, types.AttributeFilter{
-			EqualsTo: &types.DocumentAttribute{
-				Key: aws.String("_version"),
-				Value: &types.DocumentAttributeValue{
-					StringValue: query.Version,
-				},
-			},
-		})
-	}
-
 	slog.Info("Filter", "filter", filter)
+	slog.Info("Category", "category", *query.Category)
+	slog.Info("Version", "version", *query.Version)
+
 	parameters := &kendra.RetrieveInput{
 		IndexId:         &index,
 		QueryText:       &query.Question,
-		PageSize:        aws.Int32(20),
+		PageSize:        aws.Int32(10),
 		AttributeFilter: filter,
 	}
 	// do retrieve

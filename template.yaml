@@ -50,9 +50,10 @@ Resources:
               ApiKeyRequired: true
       Environment:
         Variables:
-          KENDRA_ID: 86552ac8-2f23-45fd-aa90-3c3febe50ea9
-          KENDRA_REGION: eu-west-1
-          KENDRA_LANGUAGE_CODE: de
+          KENDRA_INDEX_ID: '{{resolve:ssm:/rag/KENDRA_INDEX_ID:1}}' 
+          KENDRA_REGION: '{{resolve:ssm:/rag/KENDRA_REGION:1}}' 
+          KENDRA_LANGUAGE_CODE: '{{resolve:ssm:/rag/KENDRA_LANGUAGE_CODE:1}}' 
+          
     Metadata:
       BuildMethod: makefile
  
