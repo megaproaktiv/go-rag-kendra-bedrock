@@ -1,13 +1,22 @@
 package chain
 
 import (
+	"bytes"
 	"fmt"
+	"log"
+	"os"
+	"text/template"
 
 	"github.com/aws/aws-sdk-go-v2/service/kendra/types"
 	bedrock "github.com/megaproaktiv/go-rag-kendra-bedrock/bedrock"
 	kendra "github.com/megaproaktiv/go-rag-kendra-bedrock/kendra"
 	"golang.org/x/exp/slog"
 )
+
+type TemplateData struct {
+	Question string
+	Document string
+}
 
 func RagChain(question kendra.Query) (string, *[]kendra.Document, error) {
 	slog.Info("Lambda start")
@@ -19,28 +28,62 @@ func RagChain(question kendra.Query) (string, *[]kendra.Document, error) {
 	}
 	slog.Info("Kendra end")
 
-	pre := ` This is a friendly conversation between a human and an AI.
+	// Build the prompt
+	// from Instructions, Question, and Documents
+	promptTemplate, err := os.ReadFile("prompt.tmpl")
+	var templateStr string
+	if err != nil {
+		log.Println("Error reading template, using standard:", err)
+		templateStr = ` This is a friendly conversation between a human and an AI.
 		The AI is conversational and provides many specific details from its context.
 		If the AI does not know the answer to a question, it truthfully says that it
-		does not know.`
-
-	post := `Instruction: You are a friendly service guy.
-	 Based on this text, give a detailed answer to the following question: \n` + question.Question + ` answers with "I can't say anything about that",
-			if the data in the document is not sufficient.
+		does not know.
+		Instruction: You are a friendly service guy.
+	  Based on this text, give a detailed answer to the following question:
+				{{.Question}}
+		Answers with "I can't say anything about that",
+		if the data in the document is not sufficient.
+		<documents>
+		{{.Document}}
+		</documents>
 	`
+	}
+	templateStr = string(promptTemplate)
 
-	prompt := pre
+	preExcerpt := "<document>\n"
+	postExcerpt := "</document>\n"
+
+	documentExcerpts := ""
 	for _, doc := range query.ResultItems {
 		document := kendra.Document{
 			Excerpt: doc.Content,
 			Title:   doc.DocumentTitle,
 		}
 		document.Page = kendraPage(doc)
-		prompt = prompt + " Document Title: " + *doc.DocumentTitle
-		prompt = prompt + " Document Excerpt: " + *doc.Content
+		documentExcerpts += preExcerpt
+		documentExcerpts += " Document Title: " + *doc.DocumentTitle + "\n"
+		documentExcerpts += " Document Excerpt: " + *doc.Content
+		documentExcerpts += postExcerpt
 		documents = append(documents, document)
 	}
-	prompt = prompt + post
+
+	tmpl, err := template.New("Prompt").Parse(templateStr)
+	if err != nil {
+		log.Fatal("Error parsing template:", err)
+	}
+
+	data := TemplateData{
+		Question: question.Question,
+		Document: documentExcerpts,
+	}
+	var buffer bytes.Buffer
+	err = tmpl.Execute(&buffer, data)
+	if err != nil {
+		log.Fatal("Error executing template:", err)
+	}
+
+	// Extract the string from the buffer
+	prompt := buffer.String()
 
 	answer := bedrock.Chat(prompt)
 

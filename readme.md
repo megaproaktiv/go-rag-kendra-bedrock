@@ -2,6 +2,16 @@
 
 ## Architecure
 
+## Configure
+
+- Create kendra index
+- Set KENDRA_LANGUAGE_CODE in taskfile.yml
+- Set KENDRA_REGION in taskfile.yml
+
+```bash
+task parameter
+```
+
 ## Install
 
 ```bash

@@ -1,11 +1,22 @@
 # https://taskfile.dev
 
-version: '3'
-
+version: "3"
 vars:
-  GREETING: Hello, World!
+  AWS_REGION: eu-central-1
+  KENDRA_INDEX_ID:
+    sh: aws kendra list-indices --query "IndexConfigurationSummaryItems[0].Id" --output text --region eu-west-1
+  KENDRA_LANGUAGE_CODE: de
+  KENDRA_REGION: eu-west-1
+  STACK: goragkendrabedrock
 
 tasks:
+  parameter:
+    desc: Create the parameter store entries
+    cmds:
+      - aws ssm put-parameter --name "/rag/KENDRA_INDEX_ID" --value {{.KENDRA_INDEX_ID}} --type String --region {{.AWS_REGION}} --overwrite
+      - aws ssm put-parameter --name "/rag/KENDRA_LANGUAGE_CODE" --value {{.KENDRA_LANGUAGE_CODE}} --type String --region {{.AWS_REGION}} --overwrite
+      - aws ssm put-parameter --name "/rag/KENDRA_REGION" --value {{.KENDRA_REGION}} --type String --region {{.AWS_REGION}} --overwrite
+
   build:
     desc: Sam build
     cmds:
@@ -28,4 +39,4 @@ tasks:
   sync:
     desc: sync code
     cmds:
-      - sam sync --code --stack-name godemo --watch
+      - sam sync --code --stack-name {{.STACK}} --watch

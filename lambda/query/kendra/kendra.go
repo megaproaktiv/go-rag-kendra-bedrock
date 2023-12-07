@@ -89,7 +89,7 @@ func Retrieve(client *kendra.Client, query Query) (*kendra.RetrieveOutput, error
 	parameters := &kendra.RetrieveInput{
 		IndexId:         &index,
 		QueryText:       &query.Question,
-		PageSize:        aws.Int32(10),
+		PageSize:        aws.Int32(5),
 		AttributeFilter: filter,
 	}
 	// do retrieve

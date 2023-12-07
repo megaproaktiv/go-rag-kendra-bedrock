@@ -1,18 +1,16 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  lambda-go-proxy-api-demo-app
+  go-rag-kendra-bedrock
 
-  SAM Template for lambda-go-proxy-api-demo-app
+  SAM Template for go-rag-kendra-bedrock
 
 Globals:
   Function:
     Timeout: 5
 
-
-
 Resources:
-  DemoFunction:
+  RagFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambda/query
@@ -25,19 +23,19 @@ Resources:
       Policies:
         - AWSLambdaBasicExecutionRole
         - Statement:
-          - Sid: BedrockRuntime
-            Effect: Allow
-            Action:
-            - bedrockruntime:InvokeModel
-            - bedrock:InvokeModel
-            Resource: '*'
+            - Sid: BedrockRuntime
+              Effect: Allow
+              Action:
+                - bedrockruntime:InvokeModel
+                - bedrock:InvokeModel
+              Resource: "*"
         - Statement:
-          - Sid: KendraRetrieve
-            Effect: Allow
-            Action:
-            - kendra:Retrieve
-            - kendra:Query
-            Resource: '*'
+            - Sid: KendraRetrieve
+              Effect: Allow
+              Action:
+                - kendra:Retrieve
+                - kendra:Query
+              Resource: "*"
 
       Events:
         ApiEvents:
@@ -45,24 +43,24 @@ Resources:
           Properties:
             Path: /query
             Method: POST
-            RestApiId: !Ref DemoAPIGateway
+            RestApiId: !Ref RagAPIGateway
             Auth:
               ApiKeyRequired: true
       Environment:
         Variables:
-          KENDRA_INDEX_ID: '{{resolve:ssm:/rag/KENDRA_INDEX_ID:1}}' 
-          KENDRA_REGION: '{{resolve:ssm:/rag/KENDRA_REGION:1}}' 
-          KENDRA_LANGUAGE_CODE: '{{resolve:ssm:/rag/KENDRA_LANGUAGE_CODE:1}}' 
-          
+          KENDRA_INDEX_ID: "{{resolve:ssm:/rag/KENDRA_INDEX_ID:1}}"
+          KENDRA_REGION: "{{resolve:ssm:/rag/KENDRA_REGION:1}}"
+          KENDRA_LANGUAGE_CODE: "{{resolve:ssm:/rag/KENDRA_LANGUAGE_CODE:1}}"
+
     Metadata:
       BuildMethod: makefile
- 
-  DemoAPIGateway:
+
+  RagAPIGateway:
     Type: AWS::Serverless::Api
     Properties:
       StageName: dev
     Auth:
-      ApiKeyRequired: true  # for all methods
+      ApiKeyRequired: true # for all methods
       UsagePlan:
         CreateUsagePlan: PER_API
         Description: Usage plan for this API
@@ -74,10 +72,10 @@ Resources:
           RateLimit: 50
         Tags:
           - Key: TagName
-            Value: TagValue        
+            Value: TagValue
 
 Outputs:
   APIGWEndpoint:
     Description: API Gateway Endpoint
     Value:
-      Fn::Sub: https://${DemoAPIGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/query
+      Fn::Sub: https://${RagAPIGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/query
